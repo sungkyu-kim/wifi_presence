@@ -1,0 +1,57 @@
+{
+	"start_time":"2021-01-24 15:00:00",
+	"end_time":"2021-01-24 20:29:00",
+	"event":
+	[
+		{
+			"start_time":"2021-01-24 16:30:00",
+			"end_time":"2021-01-24 16:59:00",
+			"loc":"None",
+			"action":"None"
+		},
+		{
+			"start_time":"2021-01-24 17:00:00",
+			"end_time":"2021-01-24 17:29:00",
+			"loc":"Kitchen",
+			"action":"Cleaning"
+		},
+		{
+			"start_time":"2021-01-24 17:30:00",
+			"end_time":"2021-01-24 17:59:00",
+			"loc":"Living",
+			"action":"Cleaning"
+		},
+		{
+			"start_time":"2021-01-24 18:00:00",
+			"end_time":"2021-01-24 18:29:00",
+			"loc":"PCroom",
+			"action":"Cleaning"
+		},
+		{
+			"start_time":"2021-01-24 18:30:00",
+			"end_time":"2021-01-24 18:59:00",
+			"loc":"PCroom",
+			"action":"Computing"
+		},
+		
+		{
+			"start_time":"2021-01-24 19:00:00",
+			"end_time":"2021-01-24 19:29:00",
+			"loc":"Living",
+			"action":"WatchingTV"
+		},
+		{
+			"start_time":"2021-01-24 19:30:00",
+			"end_time":"2021-01-24 19:59:00",
+			"loc":"2people",
+			"action":"Unchecking"
+		},
+		
+		{
+			"start_time":"2021-01-24 20:00:00",
+			"end_time":"2021-01-24 20:29:00",
+			"loc":"Kitchen",
+			"action":"Eating"
+		}
+	]
+}
