@@ -12,12 +12,12 @@ colorstr = {'PCroom':'g', 'Living':'c', 'Kitchen':'m'}
 
 FIGSIZE_X, FIGSIZE_Y = 25, 15
 
-def make_data(filepath, start_time, end_time, avg=True):
+def make_data(filepath, start_time, end_time, location, avg=True):
     rssi_list = []
     time_list = []
 
     with open(filepath, 'r') as st_json :
-        #print('\n', filepath)
+        print('\n', filepath)
         for json_str in st_json:
             check_start = json_str.find('{')
             check_end = json_str.find('}')
@@ -25,6 +25,9 @@ def make_data(filepath, start_time, end_time, avg=True):
                 continue        
             json_str = json_str[check_start:check_end+1]
             st_python = json.loads(json_str)
+            if location :
+                if st_python['loc'] != location :
+                    return None
             test_time = datetime.strptime(st_python['time'], "%Y-%m-%d %H:%M:%S.%f")
             if start_time and end_time :
                 if test_time < start_time or test_time > end_time :
@@ -38,7 +41,7 @@ def make_data(filepath, start_time, end_time, avg=True):
                     time_list.append(test_time - timedelta(seconds=len(st_python['rssi']) - i + 1))
                     rssi_list = np.append(rssi_list, rssi)
 
-    #print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
+    print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
     temp_dic = {'loc':st_python['loc'], 'time_list':time_list, 'rssi':rssi_list}
     return temp_dic
     
@@ -68,14 +71,15 @@ def make_data_graph_info(data_list) :
     graph_info = {'min_time':time_min, 'max_time':time_max, 'rssi_max':math.ceil(rssi_max), 'rssi_min':math.floor(rssi_min)}
     return new_data_list, graph_info
 
-def make_data_list_top(input_path, info=None, avg=True):
+def make_data_list_top(input_path, info=None, location=None, avg=True):
     data_list = []
     folders = os.listdir(input_path)
     if info == None :
         start_time = None
         end_time = None
     else :
-        start_time=info['start_time'], end_time=info['end_time']
+        start_time=info['start_time']
+        end_time=info['end_time']
 
     for foldername in folders :
         sub_foldername = os.path.join(input_path, foldername)
@@ -84,31 +88,101 @@ def make_data_list_top(input_path, info=None, avg=True):
         for filename in files :        
             if filename.endswith('.log') :
                 filepath = os.path.join(sub_foldername, filename)
-                temp_dic = make_data(filepath, start_time, end_time, avg)
+                temp_dic = make_data(filepath, start_time, end_time, location, avg)
+                if not temp_dic :
+                    continue
                 data_list.append(temp_dic)
 
     data_list, graph_info = make_data_graph_info(data_list)
     graph_info['start_time'], graph_info['end_time'] = start_time, end_time
     return data_list, graph_info
 
-def make_data_list(input_path, info=None, avg=True):
+def make_data_list(input_path, info=None, location=None, avg=True):
     data_list = []    
     files = os.listdir(input_path)
     if info == None :
             start_time = None
             end_time = None
     else :
-        start_time=info['start_time'], end_time=info['end_time']
+        start_time=info['start_time']
+        end_time=info['end_time']
 
     for filename in files :        
         if filename.endswith('.log') :
             filepath = os.path.join(input_path, filename)
-            temp_dic = make_data(filepath, start_time, end_time, avg)
+            temp_dic = make_data(filepath, start_time, end_time, location, avg)
+            if not temp_dic :
+                    continue
             data_list.append(temp_dic)
 
     data_list, graph_info = make_data_graph_info(data_list)
     graph_info['start_time'], graph_info['end_time'] = start_time, end_time
     return data_list, graph_info
+
+def draw_time_graph(data, graph_info, info=None, location=None) :
+    legend_string = []
+
+    plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
+
+    #draw graph
+    for temp_dic in data :
+        loc = temp_dic['loc']
+        if location :
+            if loc != location :
+                continue        
+        legend_string = np.append(legend_string, loc)
+        if loc in colors :
+            color = colors[loc]
+        else :
+            color = 'k.'
+        print('loc : %s , rssi length : %d'%(loc, len(temp_dic['rssi'])))
+        plt.plot(temp_dic['time_list'], color)
+
+    if graph_info['start_time'] :
+        time_delta = timedelta(minutes=30)
+        start_time = graph_info['start_time']
+        end_time = graph_info['end_time']
+        xline_time = start_time
+    else :
+        time_delta = timedelta(hours=6)
+        start_time = graph_info['min_time']
+        end_time = graph_info['max_time']
+        xline_time = start_time.replace(hour=0, minute=0, second=0)
+
+    #draw X line
+    while xline_time <= end_time + time_delta :
+        plt.axhline(y=xline_time, color='silver', linestyle='--', linewidth=1)
+        xline_time = xline_time + time_delta
+    '''
+    # write event info
+    if info :
+        for event in info['event'] :
+            start_time = event['start_time']
+            loc = event['loc']
+            action = event['action']
+            event_text = ' loc : ' + loc + '\n act : ' + action
+            if loc in colorstr :
+                color = colorstr[loc]
+            else :
+                color = 'black'
+            plt.text(start_time, graph_info['rssi_min']-1, event_text,
+                verticalalignment='bottom', color=color)
+
+    title = (start_time.strftime('%Y-%m-%d %H:%M') + ' ~ ' +
+                end_time.strftime('%m-%d %H:%M') + ' , ' +
+                'Wi-Fi Signal Variation')
+    print('\n' + title)
+    plt.title(title)
+    '''   
+    plt.xlabel('time')
+    plt.ylabel('RSSI')
+    plt.legend(legend_string, loc='upper right')
+    plt.grid(True, axis='y', linestyle='--')
+#    plt.yticks(np.arange(graph_info['rssi_min']-1, graph_info['rssi_max']+1))
+    #plt.xticks([start_time, end_time])
+    #figManager = plt.get_current_fig_manager()
+    #figManager.window.showMaximized()
+    plt.show()
 
 def draw_rssi_graph(data, graph_info, info=None, location=None) :
     legend_string = []
@@ -358,19 +432,21 @@ def fourier_graph_by_freq(input_path, info, avg=True) :
         plt.show()
 
 def rssi_graph(input_path, info, location=None, avg=True) :
-    data, graph_info = make_data_list(input_path, info, avg)
+    data, graph_info = make_data_list(input_path, info, location, avg)
     draw_rssi_graph(data, graph_info, info, location)
 
 def rssi_graph_all(input_path='./data/', info=None, location=None, avg=True) :
-    data, graph_info = make_data_list_top(input_path, info, avg=avg)
+    data, graph_info = make_data_list_top(input_path, info, location, avg=avg)
     draw_rssi_graph(data, graph_info, info, location)
 
+def time_graph(input_path, info, location=None, avg=True) :
+    data, graph_info = make_data_list(input_path, info, location, avg)
+    draw_time_graph(data, graph_info, info, location)
 
 input_path = './data/210128'
-input_path = './data/210207'
 info = read_info(input_path)
 
-rssi_graph(input_path, info, avg=True)
+rssi_graph(input_path, info, location='PCroom', avg=False)
 
 '''
 rssi_graph(input_path, info, avg=False)
