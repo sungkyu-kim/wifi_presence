@@ -1,0 +1,58 @@
+{
+	"start_time":"2021-01-21 18:30:00",
+	"end_time":"2021-01-21 22:29:00",
+	"event":
+	[
+		{
+			"start_time":"2021-01-21 18:30:00",
+			"end_time":"2021-01-21 18:59:00",
+			"loc":"PCroom",
+			"action":"Computing"
+		},
+		{
+			"start_time":"2021-01-21 19:00:00",
+			"end_time":"2021-01-21 19:29:00",
+			"loc":"PCroom",
+			"action":"Cleaning"
+		},
+	
+		{
+			"start_time":"2021-01-21 19:30:00",
+			"end_time":"2021-01-21 19:59:00",
+			"loc":"Kitchen",
+			"action":"Cooking"
+		},
+		{
+			"start_time":"2021-01-21 20:00:00",
+			"end_time":"2021-01-21 20:29:00",
+			"loc":"Kitchen",
+			"action":"Eating"
+		},
+
+		{
+			"start_time":"2021-01-21 20:30:00",
+			"end_time":"2021-01-21 20:59:00",
+			"loc":"Living",
+			"action":"Cleaning"
+		},
+		{
+			"start_time":"2021-01-21 21:00:00",
+			"end_time":"2021-01-21 21:29:00",
+			"loc":"Living",
+			"action":"WatchingTV"
+		},
+
+		{
+			"start_time":"2021-01-21 21:30:00",
+			"end_time":"2021-01-21 21:59:00",
+			"loc":"Toiler",
+			"action":"Shower"
+		},
+		{
+			"start_time":"2021-01-21 22:00:00",
+			"end_time":"2021-01-21 22:29:00",
+			"loc":"Bedroom",
+			"action":"Rest"
+		}
+	]
+}
