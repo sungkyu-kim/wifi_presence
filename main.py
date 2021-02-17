@@ -17,7 +17,7 @@ def make_data(filepath, start_time, end_time, location, avg=True):
     time_list = []
 
     with open(filepath, 'r') as st_json :
-        print('\n', filepath)
+        #print('\n', filepath)
         for json_str in st_json:
             check_start = json_str.find('{')
             check_end = json_str.find('}')
@@ -41,7 +41,7 @@ def make_data(filepath, start_time, end_time, location, avg=True):
                     time_list.append(test_time - timedelta(seconds=len(st_python['rssi']) - i + 1))
                     rssi_list = np.append(rssi_list, rssi)
 
-    print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
+    #print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
     temp_dic = {'loc':st_python['loc'], 'time_list':time_list, 'rssi':rssi_list}
     return temp_dic
     
@@ -72,34 +72,18 @@ def make_data_graph_info(data_list) :
     return new_data_list, graph_info
 
 def make_data_list_top(input_path, info=None, location=None, avg=True):
-    data_list = []
+    input_path_list = []
     folders = os.listdir(input_path)
-    if info == None :
-        start_time = None
-        end_time = None
-    else :
-        start_time=info['start_time']
-        end_time=info['end_time']
 
     for foldername in folders :
         sub_foldername = os.path.join(input_path, foldername)
-        files = os.listdir(sub_foldername)
-
-        for filename in files :        
-            if filename.endswith('.log') :
-                filepath = os.path.join(sub_foldername, filename)
-                temp_dic = make_data(filepath, start_time, end_time, location, avg)
-                if not temp_dic :
-                    continue
-                data_list.append(temp_dic)
-
-    data_list, graph_info = make_data_graph_info(data_list)
-    graph_info['start_time'], graph_info['end_time'] = start_time, end_time
+        input_path_list.append(sub_foldername)
+    data_list, graph_info = make_data_list(input_path_list, info, location, avg)
     return data_list, graph_info
 
-def make_data_list(input_path, info=None, location=None, avg=True):
+def make_data_list(input_path_list, info=None, location=None, avg=True):
     data_list = []    
-    files = os.listdir(input_path)
+    
     if info == None :
             start_time = None
             end_time = None
@@ -107,13 +91,16 @@ def make_data_list(input_path, info=None, location=None, avg=True):
         start_time=info['start_time']
         end_time=info['end_time']
 
-    for filename in files :        
-        if filename.endswith('.log') :
-            filepath = os.path.join(input_path, filename)
-            temp_dic = make_data(filepath, start_time, end_time, location, avg)
-            if not temp_dic :
-                    continue
-            data_list.append(temp_dic)
+    for input_path in input_path_list :
+        files = os.listdir(input_path)
+        files.sort()
+        for filename in files :        
+            if filename.endswith('.log') :
+                filepath = os.path.join(input_path, filename)
+                temp_dic = make_data(filepath, start_time, end_time, location, avg)
+                if not temp_dic :
+                        continue
+                data_list.append(temp_dic)
 
     data_list, graph_info = make_data_graph_info(data_list)
     graph_info['start_time'], graph_info['end_time'] = start_time, end_time
@@ -381,7 +368,7 @@ def draw_fourier_graph_by_freq_sub(data, graph_info, fig, f_index, index) :
     plt.title(title, fontsize=10)
     return freqs
 
-def read_info(input_path):    
+def read_info(input_path): 
     filepath = input_path + '/' + 'info.json'
     event_list = []
     if not os.path.exists(filepath) :
@@ -431,23 +418,25 @@ def fourier_graph_by_freq(input_path, info, avg=True) :
         #figManager.window.showMaximized()
         plt.show()
 
-def rssi_graph(input_path, info, location=None, avg=True) :
-    data, graph_info = make_data_list(input_path, info, location, avg)
+def rssi_graph(input_path_list, info=None, location=None, avg=True) :
+    data, graph_info = make_data_list(input_path_list, info, location, avg)
     draw_rssi_graph(data, graph_info, info, location)
 
 def rssi_graph_all(input_path='./data/', info=None, location=None, avg=True) :
     data, graph_info = make_data_list_top(input_path, info, location, avg=avg)
     draw_rssi_graph(data, graph_info, info, location)
 
-def time_graph(input_path, info, location=None, avg=True) :
-    data, graph_info = make_data_list(input_path, info, location, avg)
+def time_graph(input_path_list, info=None, location=None, avg=True) :
+    data, graph_info = make_data_list(input_path_list, info, location, avg)
     draw_time_graph(data, graph_info, info, location)
 
-input_path = './data/210128'
-info = read_info(input_path)
+input_path_list = []
+input_path_list.append('./data/210128')
+input_path_list.append('./data/210207')
+#info = read_info(input_path_list)
 
-rssi_graph(input_path, info, location='PCroom', avg=False)
-
+#time_graph(input_path_list, avg=True)
+#rssi_graph_all()
 '''
 rssi_graph(input_path, info, avg=False)
 
