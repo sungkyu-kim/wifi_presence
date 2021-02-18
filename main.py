@@ -15,6 +15,7 @@ FIGSIZE_X, FIGSIZE_Y = 25, 15
 def make_data(filepath, start_time, end_time, location, avg=True):
     rssi_list = []
     time_list = []
+    pre_time = datetime(2021,1,1)
 
     with open(filepath, 'r') as st_json :
         #print('\n', filepath)
@@ -33,6 +34,13 @@ def make_data(filepath, start_time, end_time, location, avg=True):
                 if test_time < start_time or test_time > end_time :
                     continue
             test_time = test_time.replace(microsecond=0)
+            if test_time < pre_time :
+                print('\n===== time error =====')
+                print(json_str)
+                print(pre_time)
+                print(test_time)
+            pre_time = test_time
+
             if avg :
                 rssi_list = np.append(rssi_list, np.mean(st_python['rssi']))
                 time_list.append(test_time)
@@ -83,7 +91,7 @@ def make_data_list_top(input_path, info=None, location=None, avg=True):
 
 def make_data_list(input_path_list, info=None, location=None, avg=True):
     data_list = []    
-    
+
     if info == None :
             start_time = None
             end_time = None
@@ -165,7 +173,7 @@ def draw_time_graph(data, graph_info, info=None, location=None) :
     plt.ylabel('RSSI')
     plt.legend(legend_string, loc='upper right')
     plt.grid(True, axis='y', linestyle='--')
-#    plt.yticks(np.arange(graph_info['rssi_min']-1, graph_info['rssi_max']+1))
+    #plt.yticks(np.arange(graph_info['rssi_min']-1, graph_info['rssi_max']+1))
     #plt.xticks([start_time, end_time])
     #figManager = plt.get_current_fig_manager()
     #figManager.window.showMaximized()
@@ -394,20 +402,20 @@ def read_info(input_path):
     info = {'start_time':info_start_time, 'end_time':info_end_time, 'event':event_list}
     return info
 
-def fourier_graph_by_time(input_path, info, avg=True) :
+def fourier_graph_by_time(input_path_list, info, location=None, avg=True) :
     for event in info['event'] :
-        data, graph_info = make_data_list(input_path, info, avg)
+        data, graph_info = make_data_list(input_path_list, info, location, avg)
         graph_info['loc'] = event['loc']
         graph_info['action'] = event['action']
         draw_fourier_graph_by_time(data, graph_info)
 
-def fourier_graph_by_freq(input_path, info, avg=True) :
+def fourier_graph_by_freq(input_path_list, info, location=None,avg=True) :
     f_index_count = 5
     for f_index in range(f_index_count) :
         plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
         fig = plt.figure()
         for i, event in enumerate(info['event']) :
-            data, graph_info = make_data_list(input_path, info, avg)
+            data, graph_info = make_data_list(input_path_list, info, location, avg)
             graph_info['loc'] = event['loc']
             graph_info['action'] = event['action']
             freqs_list = draw_fourier_graph_by_freq_sub(data, graph_info, fig, f_index, i)
@@ -423,20 +431,30 @@ def rssi_graph(input_path_list, info=None, location=None, avg=True) :
     draw_rssi_graph(data, graph_info, info, location)
 
 def rssi_graph_all(input_path='./data/', info=None, location=None, avg=True) :
-    data, graph_info = make_data_list_top(input_path, info, location, avg=avg)
+    data, graph_info = make_data_list_top(input_path, info, location, avg)
     draw_rssi_graph(data, graph_info, info, location)
 
 def time_graph(input_path_list, info=None, location=None, avg=True) :
     data, graph_info = make_data_list(input_path_list, info, location, avg)
     draw_time_graph(data, graph_info, info, location)
 
-input_path_list = []
-input_path_list.append('./data/210128')
-input_path_list.append('./data/210207')
-#info = read_info(input_path_list)
+def time_graph_all(input_path='./data/', info=None, location=None, avg=True) :
+    data, graph_info = make_data_list_top(input_path, info, location, avg)
+    draw_time_graph(data, graph_info, info, location)
 
+input_path_list = []
+input_path_list.append('./data/210121')
+#input_path_list.append('./data/210128')
+#input_path_list.append('./data/210207')
+info = read_info('./data/210121')
+#rssi_graph(input_path_list, info, avg=True)
 #time_graph(input_path_list, avg=True)
-#rssi_graph_all()
+#rssi_graph(input_path_list, location='PCroom', avg=True)
+#time_graph(input_path_list, location='PCroom')
+#time_graph(input_path_list)
+#time_graph_all()
+fourier_graph_by_time(input_path_list, info) 
+fourier_graph_by_freq(input_path_list, info)
 '''
 rssi_graph(input_path, info, avg=False)
 
