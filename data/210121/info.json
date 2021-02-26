@@ -15,7 +15,6 @@
 			"loc":"PCroom",
 			"action":"Cleaning"
 		},
-	
 		{
 			"start_time":"2021-01-21 19:30:00",
 			"end_time":"2021-01-21 19:59:00",
@@ -28,7 +27,6 @@
 			"loc":"Kitchen",
 			"action":"Eating"
 		},
-
 		{
 			"start_time":"2021-01-21 20:30:00",
 			"end_time":"2021-01-21 20:59:00",
@@ -41,11 +39,10 @@
 			"loc":"Living",
 			"action":"WatchingTV"
 		},
-
 		{
 			"start_time":"2021-01-21 21:30:00",
 			"end_time":"2021-01-21 21:59:00",
-			"loc":"Toiler",
+			"loc":"Toilet",
 			"action":"Shower"
 		},
 		{

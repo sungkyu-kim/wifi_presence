@@ -23,7 +23,7 @@ def make_data(filepath, start_time, end_time, location, avg=True):
             check_start = json_str.find('{')
             check_end = json_str.find('}')
             if check_start < 0 or check_end < 0 :
-                continue        
+                continue
             json_str = json_str[check_start:check_end+1]
             st_python = json.loads(json_str)
             if location :
@@ -52,7 +52,7 @@ def make_data(filepath, start_time, end_time, location, avg=True):
     #print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
     temp_dic = {'loc':st_python['loc'], 'time_list':time_list, 'rssi':rssi_list}
     return temp_dic
-    
+
 def make_data_graph_info(data_list) :
     rssi_max, rssi_min = -100, 0
     time_max, time_min = datetime(2021,1,1), datetime(2031,1,1)
@@ -119,12 +119,12 @@ def draw_time_graph(data, graph_info, info=None, location=None) :
 
     plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
 
-    #draw graph
+    # draw graph
     for temp_dic in data :
         loc = temp_dic['loc']
         if location :
             if loc != location :
-                continue        
+                continue
         legend_string = np.append(legend_string, loc)
         if loc in colors :
             color = colors[loc]
@@ -204,10 +204,10 @@ def draw_rssi_graph(data, graph_info, info=None, location=None) :
         end_time = graph_info['end_time']
         xline_time = start_time
     else :
-        time_delta = timedelta(hours=12)
+        time_delta = timedelta(hours=1)
         start_time = graph_info['min_time']
         end_time = graph_info['max_time']
-        xline_time = start_time.replace(hour=0, minute=0, second=0)
+        xline_time = start_time.replace(minute=0, second=0)
 
     #draw X line
     while xline_time <= end_time + time_delta :
@@ -252,7 +252,7 @@ def draw_fourier_graph(data, graph_info) :
     f_index = 2
 
     for temp_dic in data :
-        loc = temp_dic['loc']        
+        loc = temp_dic['loc']
         avg_rssi = temp_dic['rssi']
         
         # perform Fourier transform without sorting
@@ -314,12 +314,12 @@ def draw_fourier_graph_by_time(data, graph_info) :
             freq_strength_max = freq_strength_list_sub.max()
 
     plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
-    fig = plt.figure()    
+    fig = plt.figure()
     for i in range(f_index_count):
         fig.add_subplot(subplot_x, subplot_y, i+1)
         plt.bar(x_index, freq_strength_list[i])
         for j, v in enumerate(x_index):
-            plt.text(v, freq_strength_list[i][j], round(freq_strength_list[i][j], 4), 
+            plt.text(v, freq_strength_list[i][j], round(freq_strength_list[i][j],4), 
                 horizontalalignment='center', verticalalignment='bottom', fontsize=9, color='darkblue')
             if v == graph_info['loc'] :
                 plt.text(v, freq_strength_list[i][j]/4, "★", 
@@ -368,7 +368,7 @@ def draw_fourier_graph_by_freq_sub(data, graph_info, fig, f_index, index) :
             plt.text(v, freq_strength_list_sub[j]/2, "★", 
                 horizontalalignment='center', verticalalignment='bottom', color='red', fontsize=25)        
     plt.ylim([0, freq_strength_max*1.1])
-    plt.ylabel('Fourier(rssi)')    
+    plt.ylabel('Fourier(rssi)')
     title = (graph_info['start_time'].strftime('%Y-%m-%d %H:%M') + ' ~ ' + 
                 graph_info['end_time'].strftime('%H:%M') + ' , ' + 
                 'Location : ' + graph_info['loc'] + ' , ' + 
@@ -376,16 +376,16 @@ def draw_fourier_graph_by_freq_sub(data, graph_info, fig, f_index, index) :
     plt.title(title, fontsize=10)
     return freqs
 
-def read_info(input_path): 
+def read_info(input_path) : 
     filepath = input_path + '/' + 'info.json'
     event_list = []
     if not os.path.exists(filepath) :
         return None
-    
+
     with open(filepath, 'r') as st_json :
         print('\n filename : ', filepath)
         json_data = json.load(st_json)
-        
+
         info_start_time = datetime.strptime(json_data['start_time'], "%Y-%m-%d %H:%M:%S")
         info_end_time = datetime.strptime(json_data['end_time'], "%Y-%m-%d %H:%M:%S")
         event_array = json_data.get('event')
@@ -399,6 +399,7 @@ def read_info(input_path):
                     %(start_time.strftime("%Y/%m/%d %H:%M:%S"), end_time.strftime("%Y/%m/%d %H:%M:%S"), loc, action))
                 temp_dic = {'start_time':start_time, 'end_time':end_time, 'loc':loc, 'action':action}
                 event_list.append(temp_dic)
+    
     info = {'start_time':info_start_time, 'end_time':info_end_time, 'event':event_list}
     return info
 
@@ -443,18 +444,18 @@ def time_graph_all(input_path='./data/', info=None, location=None, avg=True) :
     draw_time_graph(data, graph_info, info, location)
 
 input_path_list = []
-input_path_list.append('./data/210121')
+input_path_list.append('./data/210217')
 #input_path_list.append('./data/210128')
 #input_path_list.append('./data/210207')
-info = read_info('./data/210121')
+#info = read_info('./data/210121')
 #rssi_graph(input_path_list, info, avg=True)
 #time_graph(input_path_list, avg=True)
 #rssi_graph(input_path_list, location='PCroom', avg=True)
 #time_graph(input_path_list, location='PCroom')
-#time_graph(input_path_list)
+rssi_graph(input_path_list, avg=False)
 #time_graph_all()
-fourier_graph_by_time(input_path_list, info) 
-fourier_graph_by_freq(input_path_list, info)
+#fourier_graph_by_time(input_path_list, info) 
+#fourier_graph_by_freq(input_path_list, info)
 '''
 rssi_graph(input_path, info, avg=False)
 
