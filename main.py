@@ -444,7 +444,7 @@ def time_graph_all(input_path='./data/', info=None, location=None, avg=True) :
     draw_time_graph(data, graph_info, info, location)
 
 input_path_list = []
-input_path_list.append('./data/210217')
+input_path_list.append('./data/210220')
 #input_path_list.append('./data/210128')
 #input_path_list.append('./data/210207')
 #info = read_info('./data/210121')
@@ -452,7 +452,8 @@ input_path_list.append('./data/210217')
 #time_graph(input_path_list, avg=True)
 #rssi_graph(input_path_list, location='PCroom', avg=True)
 #time_graph(input_path_list, location='PCroom')
-rssi_graph(input_path_list, avg=False)
+info = read_info(input_path_list[0])
+rssi_graph(input_path_list, info, avg=False)
 #time_graph_all()
 #fourier_graph_by_time(input_path_list, info) 
 #fourier_graph_by_freq(input_path_list, info)

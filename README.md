@@ -17,3 +17,9 @@
 
 ## 210207
  - Long term data
+
+## 210217
+ - Tester moving and input "Tash" data
+
+## 210220
+ - Long term data without tester
