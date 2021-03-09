@@ -15,6 +15,7 @@ FIGSIZE_X, FIGSIZE_Y = 25, 15
 def make_data(filepath, start_time, end_time, location, avg=True):
     rssi_list = []
     time_list = []
+    tash_list = []
     pre_time = datetime(2021,1,1)
 
     with open(filepath, 'r') as st_json :
@@ -24,8 +25,8 @@ def make_data(filepath, start_time, end_time, location, avg=True):
             check_end = json_str.find('}')
             if check_start < 0 or check_end < 0 :
                 continue
-            json_str = json_str[check_start:check_end+1]
-            st_python = json.loads(json_str)
+            json_str_value = json_str[check_start:check_end+1]
+            st_python = json.loads(json_str_value)
             if location :
                 if st_python['loc'] != location :
                     return None
@@ -41,16 +42,27 @@ def make_data(filepath, start_time, end_time, location, avg=True):
                 print(test_time)
             pre_time = test_time
 
+            find_tash = json_str.find('TASH')
+            if find_tash < 0 :
+                is_tash = False
+            else :
+                is_tash = True
+            
             if avg :
                 rssi_list = np.append(rssi_list, np.mean(st_python['rssi']))
                 time_list.append(test_time)
+                if is_tash :
+                    tash_list.append(test_time)
             else :
                 for i, rssi in enumerate(st_python['rssi']) :
-                    time_list.append(test_time - timedelta(seconds=len(st_python['rssi']) - i + 1))
+                    temp_time = test_time - timedelta(seconds=len(st_python['rssi']) - i + 1)
+                    time_list.append(temp_time)
                     rssi_list = np.append(rssi_list, rssi)
+                    if is_tash :
+                        tash_list.append(temp_time)
 
     #print("loc : %s , time size : %d , rssi size : %d"%(st_python['loc'], len(time_list), len(rssi_list)))
-    temp_dic = {'loc':st_python['loc'], 'time_list':time_list, 'rssi':rssi_list}
+    temp_dic = {'loc':st_python['loc'], 'time_list':time_list, 'rssi':rssi_list, 'tash':tash_list}
     return temp_dic
 
 def make_data_graph_info(data_list) :
@@ -179,17 +191,17 @@ def draw_time_graph(data, graph_info, info=None, location=None) :
     #figManager.window.showMaximized()
     plt.show()
 
-def draw_rssi_graph(data, graph_info, info=None, location=None) :
+def draw_rssi_graph(data, graph_info, info=None, location=None, tash=False) :
     legend_string = []
 
     plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
 
-    #draw graph
+    # draw graph
     for temp_dic in data :
         loc = temp_dic['loc']
         if location :
             if loc != location :
-                continue        
+                continue
         legend_string = np.append(legend_string, loc)
         if loc in colors :
             color = colors[loc]
@@ -199,34 +211,67 @@ def draw_rssi_graph(data, graph_info, info=None, location=None) :
         plt.plot(temp_dic['time_list'], temp_dic['rssi'], color)
 
     if graph_info['start_time'] :
-        time_delta = timedelta(minutes=30)
         start_time = graph_info['start_time']
         end_time = graph_info['end_time']
-        xline_time = start_time
     else :
-        time_delta = timedelta(hours=1)
         start_time = graph_info['min_time']
         end_time = graph_info['max_time']
-        xline_time = start_time.replace(minute=0, second=0)
 
-    #draw X line
-    while xline_time <= end_time + time_delta :
-        plt.axvline(x=xline_time, color='silver', linestyle='--', linewidth=1)
-        xline_time = xline_time + time_delta
+    # set time_delta
+    gap_time = end_time - start_time
+    if gap_time > timedelta(days=10) :
+        time_delta = timedelta(days=1)
+    elif gap_time > timedelta(days=6) :
+        time_delta = timedelta(hours=12)
+    elif gap_time > timedelta(days=3) :
+        time_delta = timedelta(hours=6)
+    elif gap_time > timedelta(days=1) :
+        time_delta = timedelta(hours=3)
+    elif gap_time > timedelta(hours=12) :
+        time_delta = timedelta(hours=1)
+    else :
+        time_delta = timedelta(minutes=30)
 
     # write event info
     if info :
-        for event in info['event'] :
-            start_time = event['start_time']
-            loc = event['loc']
-            action = event['action']
-            event_text = ' loc : ' + loc + '\n act : ' + action
-            if loc in colorstr :
+        if info['event'] :
+            time_delta = timedelta(minutes=30)
+            for event in info['event'] :
+                start_time_event = event['start_time']
+                loc = event['loc']
+                action = event['action']
+                event_text = ' loc : ' + loc + '\n act : ' + action
+                if loc in colorstr :
+                    color = colorstr[loc]
+                else :
+                    color = 'black'
+                plt.text(start_time_event, graph_info['rssi_min']-1, event_text,
+                    verticalalignment='bottom', color=color)
+
+    # draw tash event
+    if tash :
+        for temp_dic in data :
+            loc = temp_dic['loc']
+            if location :
+                if loc != location :
+                    continue
+            
+            if loc in colors :
                 color = colorstr[loc]
             else :
                 color = 'black'
-            plt.text(start_time, graph_info['rssi_min']-1, event_text,
-                verticalalignment='bottom', color=color)
+            tash_list = temp_dic['tash']
+            for tash_time in tash_list :
+                plt.axvline(x=tash_time, color=color, linestyle='--', linewidth=1)
+
+    # draw X line
+    xline_time = start_time.replace(hour=0, minute=0, second=0)
+    while xline_time + time_delta <= start_time :
+        xline_time = xline_time + time_delta
+
+    while xline_time <= end_time + time_delta :
+        plt.axvline(x=xline_time, color='silver', linestyle='--', linewidth=1)
+        xline_time = xline_time + time_delta
 
     title = (start_time.strftime('%Y-%m-%d %H:%M') + ' ~ ' +
                 end_time.strftime('%m-%d %H:%M') + ' , ' +
@@ -338,6 +383,67 @@ def draw_fourier_graph_by_time(data, graph_info) :
     #figManager.window.showMaximized()
     plt.show()
 
+def draw_fourier_graph_full(data, graph_info, data_len=100) :
+    f_index_count = 6
+    subplot_x, subplot_y = 6, 1
+    freq_strength_list = []
+    freqs_list = []
+    time_list = []
+    x_index = []
+    rssi_index = []
+
+    for temp_dic in data :
+        loc = temp_dic['loc']
+        rssi = temp_dic['rssi']
+        time = temp_dic['time_list']
+        x_index = np.append(x_index, loc)
+        rssi_index.append(rssi)
+        time_list.append(time)
+
+    for i in range(f_index_count):
+        freq_strength_list_sub = []
+        ## plotting for understanding visually
+        f_index = i
+        for j in range(0, len(rssi_index)) : 
+            freq_strength_temp_list = []
+            for k in range(int(data_len/2), len(rssi_index[j]) - data_len) :
+                freq_strength, freqs = get_fourier_transform(rssi_index[j][k:k+data_len], f_index)
+                freq_strength_temp_list.append(round(freq_strength,4))
+            freq_strength_list_sub.append(freq_strength_temp_list)
+        freq_strength_list.append(freq_strength_list_sub)
+        freqs_list.append(freqs)
+
+    plt.rcParams['figure.figsize'] = [FIGSIZE_X, FIGSIZE_Y]
+    fig = plt.figure()
+    for i in range(f_index_count):
+        fig.add_subplot(subplot_x, subplot_y, i+1)
+
+        for j, loc in enumerate(x_index):
+            color = colorstr[loc]
+            plt.plot(time_list[j][int(data_len/2):len(freq_strength_list[i][j])+int(data_len/2)], freq_strength_list[i][j], color)
+        
+        for temp_dic in data :
+            loc = temp_dic['loc']
+            if loc in colors :
+                color = colorstr[loc]
+            else :
+                color = 'black'
+            tash_list = temp_dic['tash']
+            for tash_time in tash_list :
+                plt.axvline(x=tash_time, color=color, linestyle='--', linewidth=1)
+
+        plt.title('Wi-Fi Signal Strength at ' + str(round(freqs_list[i],4)) + ' Hz' + ' , f_index : %d'%(i))
+        plt.ylabel('Fourier(rssi)')
+        plt.grid(True, axis='y', linestyle='--')
+
+    title = (graph_info['start_time'].strftime('%Y-%m-%d %H:%M:%S') + ' ~ ' + 
+                graph_info['end_time'].strftime('%Y-%m-%d %H:%M:%S') )
+    print('\n' + title)
+    plt.legend(x_index, loc='upper right')
+    plt.suptitle(title)
+
+    plt.show()
+
 def draw_fourier_graph_by_freq_sub(data, graph_info, fig, f_index, index) :
     x_index = []
     rssi_index = []
@@ -427,9 +533,9 @@ def fourier_graph_by_freq(input_path_list, info, location=None,avg=True) :
         #figManager.window.showMaximized()
         plt.show()
 
-def rssi_graph(input_path_list, info=None, location=None, avg=True) :
+def rssi_graph(input_path_list, info=None, location=None, avg=True, tash=False) :
     data, graph_info = make_data_list(input_path_list, info, location, avg)
-    draw_rssi_graph(data, graph_info, info, location)
+    draw_rssi_graph(data, graph_info, info, location, tash)
 
 def rssi_graph_all(input_path='./data/', info=None, location=None, avg=True) :
     data, graph_info = make_data_list_top(input_path, info, location, avg)
@@ -443,8 +549,29 @@ def time_graph_all(input_path='./data/', info=None, location=None, avg=True) :
     data, graph_info = make_data_list_top(input_path, info, location, avg)
     draw_time_graph(data, graph_info, info, location)
 
+def fourier_graph_full(input_path_list, info, location=None, avg=True, data_len=100) :
+    data, graph_info = make_data_list(input_path_list, info, location, avg)
+    draw_fourier_graph_full(data, graph_info, data_len=data_len)
+
 input_path_list = []
-input_path_list.append('./data/210220')
+#input_path_list.append('./data/210121')
+#input_path_list.append('./data/210123')
+#input_path_list.append('./data/210124')
+#input_path_list.append('./data/210126')
+#input_path_list.append('./data/210128')
+#input_path_list.append('./data/210207')
+input_path_list.append('./data/210217')
+#input_path_list.append('./data/210220')
+info = read_info(input_path_list[0])
+fourier_graph_full(input_path_list, info, avg=True)
+
+'''
+for input_list in input_path_list :
+    input_ = []
+    info = read_info(input_list)
+    input_.append(input_list)
+    rssi_graph(input_, info, avg=True, tash=True)
+'''
 #input_path_list.append('./data/210128')
 #input_path_list.append('./data/210207')
 #info = read_info('./data/210121')
@@ -452,8 +579,6 @@ input_path_list.append('./data/210220')
 #time_graph(input_path_list, avg=True)
 #rssi_graph(input_path_list, location='PCroom', avg=True)
 #time_graph(input_path_list, location='PCroom')
-info = read_info(input_path_list[0])
-rssi_graph(input_path_list, info, avg=False)
 #time_graph_all()
 #fourier_graph_by_time(input_path_list, info) 
 #fourier_graph_by_freq(input_path_list, info)
